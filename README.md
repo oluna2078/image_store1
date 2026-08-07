@@ -18,12 +18,12 @@ The structure is the following:
 `{media_id}` is the file name.
 
 goals:
--[ ] function: `image.filetype` -> `media_id` (save)
--[ ] function: `media_id` -> `image[media_id]` (retrieve)
--[ ] validation of files (if they are valid images, aybe via MIME types)
--[ ] autoconversion to a standard filetype for all images (e.g. all to JPEG)
--[ ] compression before storing images (maybe using ffmpeg)
--[ ] removal of EXIF data (maybe using exiftool)
+- [ ] function: `image.filetype` -> `media_id` (save)
+- [ ] function: `media_id` -> `image[media_id]` (retrieve)
+- [ ] validation of files (if they are valid images, aybe via MIME types)
+- [ ] autoconversion to a standard filetype for all images (e.g. all to JPEG)
+- [ ] compression before storing images (maybe using ffmpeg)
+- [ ] removal of EXIF data (maybe using exiftool)
 
 
 ### Database
@@ -31,8 +31,8 @@ goals:
 The media id may be a standard form UUID
 
 goals:
--[ ] function: `image.filetype, metadata` -> `media_id` (insert)
--[ ] function: `media_id` -> `image.filetype, metadata` (select)
+- [ ] function: `image.filetype, metadata` -> `media_id` (insert)
+- [ ] function: `media_id` -> `image.filetype, metadata` (select)
 
 
 ### API
@@ -42,8 +42,8 @@ http://domain.test/media/{media_id}.filetype
 ```
 
 goals:
--[ ] function: `image.filetype, metadata` -> `image_url` (store)
--[ ] function: `image_url` -> `image.filetype` (read)
+- [ ] function: `image.filetype, metadata` -> `image_url` (store)
+- [ ] function: `image_url` -> `image.filetype` (read)
 
 
 ##### Furthermore
