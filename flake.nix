@@ -22,6 +22,7 @@
             uvicorn
 	    fastapi
 	    sqlalchemy
+	    pillow
 	]);
 
 	# Install all dependencies of a package
