@@ -39,13 +39,13 @@ goals:
 ### API
 URL structure:
 ```
-http://domain.test/media/{media_id}.filetype
+http://domain.test/media/{media_id}
 ```
 
 goals:
-- [ ] function: `image.filetype, metadata` -> `image_url` (save)
-- [ ] function: `image_url` -> `image.filetype` (read)
+- [x] function: `image.filetype, metadata` -> `image_url` (save)
+- [x] function: `image_url` -> `image.filetype` (read)
 
 
-##### Furthermore
+## Furthermore
 I might need to make everything async...

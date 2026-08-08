@@ -23,6 +23,7 @@
 	    fastapi
 	    sqlalchemy
 	    pillow
+	    python-multipart
 	]);
 
 	# Install all dependencies of a package
