@@ -10,6 +10,16 @@ from src import db_queries as queries
 
 PREFFERED_FORMAT: str = ''
 
+MIME_TYPES: dict[str, str] = {
+    'PNG': 'image/png',
+    'JPEG': 'image/jpeg',
+    'WEBP': 'image/webp',
+    'GIF': 'image/gif',
+    'ICO': 'image/x-icon'
+}
+
+DEFAULT_TYPE: str = 'image/png'
+
 
 # converts bytestream into image
 def stream2image(stream: bytes) -> ImageFile | None:
@@ -48,6 +58,14 @@ def get_filetype(media_id: str) -> str:
         return filetype
     else:
         raise NoResultFound
+
+# takes filetype and outputs MIME type
+# if the filetype isn't known it returns a default
+def get_mimetype(filetype: str) -> str:
+    if filetype in MIME_TYPES:
+        return MIME_TYPES[filetype]
+    else:
+        return DEFAULT_TYPE
 
 
 ## Checks if image exists and returns a boolean

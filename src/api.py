@@ -28,6 +28,17 @@ def add_image(image_stream: Annotated[bytes, File()]):
 
 @app.get(
     "/media/{id}",
+    responses = {
+        200: {
+            "content": {
+                "image/png": {},
+                "image/jpeg": {},
+                "image/webp": {},
+                "image/gif": {},
+                "image/x-icon": {}
+            }
+        }
+    },
     response_class=Response
 )
 def view_image(
@@ -38,8 +49,9 @@ def view_image(
 
     if image:
         filetype: str = img_handler.get_filetype(media_id)
+        mediatype: str = img_handler.get_mimetype(filetype)
         image_bytes = img_handler.image2stream(image, filetype)
 
-        return Response(content=image_bytes, media_type=f"image/{filetype.lower()}")    
+        return Response(content=image_bytes, media_type=mediatype)    
     else:
         raise HTTPException(status_code=404, detail="File not found")
