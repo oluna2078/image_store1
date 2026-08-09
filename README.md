@@ -1,4 +1,4 @@
-# Image store /w API
+# Simple image store API
 
 ![Big logo image][logo]
 
