@@ -4,13 +4,18 @@ from PIL.ImageFile import ImageFile
 from fastapi import FastAPI, File, HTTPException, Path, Response
 from io import BytesIO
 from PIL import Image
+from fastapi.responses import FileResponse
 
 from src import storage as storage
 from src import database as db
 
+FAVICON_PATH: str = "res/favicon.ico"
 
 app = FastAPI()
 
+@app.get("/favicon.ico", response_class=FileResponse)
+def get_favicon():
+    return FAVICON_PATH
 
 @app.post("/media/")
 def save_image(
