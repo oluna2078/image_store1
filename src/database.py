@@ -1,5 +1,6 @@
-from typing import Optional, List
-from sqlalchemy import ARRAY, JSON, String, engine, create_engine, select
+from typing import Optional
+from sqlalchemy import JSON, engine, create_engine, select
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import DeclarativeBase, Session, Mapped, mapped_column
 import os
 
@@ -14,20 +15,22 @@ class ImageEntry(Base):
     image_metadata: Mapped[Optional[list[str]]] = mapped_column(JSON)
 
 
-db_path: str = os.getcwd() + "/db"
+DB_PATH: str = os.getcwd() + "/db"
 
 # creates ../db if needed
 def init_db_dir() -> None:
     try:
-        os.mkdir(db_path, mode=0o700)
+        os.mkdir(DB_PATH, mode=0o700)
     except FileExistsError:
-        print(f"{db_path} already exists, init skipped")
+        print(f"{DB_PATH} already exists, init skipped")
 
 init_db_dir()
 
-engine = create_engine(f"sqlite:///{db_path}/media-index.sqlite3", echo=False)
+
+engine = create_engine(f"sqlite:///{DB_PATH}/media-index.sqlite3", echo=False)
 
 Base.metadata.create_all(engine)
+
 
 # takes PIL image obj, str with UUID
 # returns store_id (in UUID) as str
@@ -41,3 +44,24 @@ def index_image(image, id) -> str:
 
         return id
 
+# takes media_id (str) and checks if db contains it
+# returns boolean
+def image_exists(media_id: str) -> bool:
+    with Session(engine) as session:
+        stmt = select(ImageEntry).where(ImageEntry.id == media_id)
+        exists = session.scalars(stmt).first()
+
+        if exists:
+            return True
+        else:
+            return False
+
+# takes media_id and queries for file format
+def get_filetype(media_id: str) -> str:
+    with Session(engine) as session:
+        stmt = select(ImageEntry.filetype).where(ImageEntry.id == media_id)
+        filetype = session.scalars(stmt).first()
+        if filetype:
+            return filetype
+        else:
+            raise NoResultFound

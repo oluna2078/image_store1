@@ -1,7 +1,7 @@
 from typing import Annotated
+from uuid import UUID
 from PIL.ImageFile import ImageFile
-from fastapi import FastAPI, File, Path, Response, UploadFile
-import uuid
+from fastapi import FastAPI, File, HTTPException, Path, Response
 from io import BytesIO
 from PIL import Image
 
@@ -24,7 +24,7 @@ def save_image(
 
 
 @app.get(
-    "/media/{media_id}",
+    "/media/{id}",
     responses = {
         200: {
             "content": {"image/png": {}}
@@ -35,11 +35,15 @@ def save_image(
     response_class=Response
 )
 def read_image(
-        media_id: Annotated[str, Path()]
+        id: Annotated[UUID, Path()]
 ):
-    image: ImageFile = storage.retrieve_image(media_id)
-    buffer = BytesIO()
-    image.save(buffer, format='PNG')
-    image_bytes = buffer.getvalue()
+    media_id: str = str(id)
+    if db.image_exists(media_id) is True:
+        image: ImageFile = storage.retrieve_image(media_id)
+        buffer = BytesIO()
+        image.save(buffer, format='PNG')
+        image_bytes = buffer.getvalue()
 
-    return Response(content=image_bytes, media_type="image/png")    
+        return Response(content=image_bytes, media_type="image/png")    
+    else:
+        raise HTTPException(status_code=404, detail="File not found")
