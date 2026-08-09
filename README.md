@@ -1,12 +1,10 @@
 # Image store /w API
 
-Using normal filestor structure for the moment. The files are stored in `./files/{id}`. The plan is to get a file storage system, a database that keeps track of these files and an API that interacts with both up and running.
+Using normal filestore structure for the moment. The files are stored in `./store/{id}`. The plan is to get a file storage system, a database that keeps track of these files and an API that interacts with both up and running.
 
 ```
 file storage <- database <- API
 ```
-
-It would be useful to add Docker later and other things to at least make it fit to host on Kubernetes/Podman.
 
 
 ### Storage
@@ -49,3 +47,5 @@ goals:
 
 ## Furthermore
 I might need to make everything async...
+
+It would be useful to add Dockerfile later and other things to at least make it fit to host on Kubernetes/Docker.
