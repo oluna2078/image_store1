@@ -1,5 +1,7 @@
 # Image store /w API
 
+![Big logo image][logo]
+
 Using normal filestore structure for the moment. The files are stored in `./store/{id}`. The plan is to get a file storage system, a database that keeps track of these files and an API that interacts with both up and running.
 
 ```
@@ -49,3 +51,5 @@ goals:
 I might need to make everything async...
 
 It would be useful to add Dockerfile later and other things to at least make it fit to host on Kubernetes/Docker.
+
+[logo]: ./res/image_store1_logo.png
