@@ -11,12 +11,6 @@ FAVICON_PATH: str = "res/favicon.ico"
 app = FastAPI()
 
 
-# tab icon
-@app.get("/favicon.ico", response_class=FileResponse)
-def get_favicon():
-    return FAVICON_PATH
-
-
 # uploads
 @app.post("/media/upload/")
 def add_image(image_stream: Annotated[bytes, File()]):
@@ -28,7 +22,8 @@ def add_image(image_stream: Annotated[bytes, File()]):
         raise HTTPException(status_code=422, detail="Cannot process image")
 
 @app.post("/media/multi-upload/")
-def add_multiple_images(image_list: Annotated[list[bytes], File()]):
+def add_multiple_images(image_list: Annotated[list[bytes], File()]
+)-> list[dict[str, str]]:
     media_ids: list[dict[str, str]] = []
 
     for image_stream in image_list:
@@ -74,7 +69,17 @@ def view_image(
         raise HTTPException(status_code=404, detail="File not found")
 
 
-@app.get("/")
+# tab icon
+@app.get("/favicon.ico", response_class=FileResponse)
+def get_favicon():
+    return FAVICON_PATH
+
+
+# small demo page
+@app.get(
+    "/",
+    response_class=HTMLResponse
+)
 async def main():
     content = """
         <body>
