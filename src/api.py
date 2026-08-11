@@ -11,7 +11,7 @@ FAVICON_PATH: str = "res/favicon.ico"
 app = FastAPI()
 
 
-# uploads
+# uploads (single & multi)
 @app.post("/media/upload/", status_code=201)
 def add_image(image_stream: Annotated[bytes, File()]):
     image = img_handler.stream2image(image_stream)
@@ -79,6 +79,23 @@ def delete_image(
         return {"media_id": id}
     else:
         raise HTTPException(status_code=500, detail=f"Deletion failed: {details}")
+
+
+# update/edit
+@app.put("/media/{id}")
+def update_image(
+        id: Annotated[UUID, Path()],
+        image_stream: Annotated[bytes, File()]
+):
+    new_image = img_handler.stream2image(image_stream)
+    if new_image:
+        details = img_handler.update_image(str(id), new_image)
+        if not details:
+            return {"media_id": id}
+        else:
+            raise HTTPException(status_code=500, detail=f"Update failed: {details}")
+    else:
+        raise HTTPException(status_code=415, detail="Cannot process images")
 
 
 # tab icon

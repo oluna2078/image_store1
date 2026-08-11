@@ -1,5 +1,4 @@
-from io import BytesIO
-import os, uuid
+import os
 from PIL import Image
 from PIL.ImageFile import ImageFile
 
@@ -18,8 +17,7 @@ init_store()
 
 # takes an image and stores it in ../files/ with the file name: media_id
 # returns filepath of stored image
-def store_image(image) ->  str:
-    media_id = uuid.uuid4()
+def store_image(image: ImageFile, media_id: str) ->  str:
     save_path = f"{STORAGE_PATH}/{media_id}"
     image_format = image.format
 
