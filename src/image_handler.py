@@ -1,6 +1,8 @@
+import uuid
 from io import BytesIO
 from PIL import Image
 from PIL.ImageFile import ImageFile
+from sqlalchemy import except_
 from sqlalchemy.exc import NoResultFound
 
 from src import storage as storage
@@ -20,6 +22,9 @@ MIME_TYPES: dict[str, str] = {
 
 DEFAULT_TYPE: str = 'image/png'
 
+# generates media_id and returns it as str
+def generate_id() -> str:
+    return str(uuid.uuid4())
 
 # converts bytestream into image
 def stream2image(stream: bytes) -> ImageFile | None:
@@ -40,16 +45,50 @@ def image2stream(image: ImageFile, filetype: str) -> bytes:
 # takes an image, indexes and stores it
 # gives back its media_id
 def save_image(image) -> str:
-    id: str = storage.store_image(image)
-    db.index_image(image, id)
-    return id
+    media_id = generate_id()
+    storage.store_image(image, media_id)
+    db.index_image(image, media_id)
+    return media_id
 
+## Checks if image exists and returns a boolean
+def image_exists(media_id: str) -> bool:
+    exists = db.query(queries.id(media_id))
+    if exists:
+        return True
+    else:
+        return False
 
 # takes media_id and returns image file
 def get_image(media_id: str) -> ImageFile | None:
-    if db.query(queries.id(media_id)):
+    if image_exists(media_id):
         image: ImageFile = storage.retrieve_image(media_id)
         return image    
+
+# takes media_id and deletes requested image
+# returns None if successful and a str with details if not
+def delete_image(media_id: str) -> str | None:
+    if image_exists(media_id):
+        db.delete_entry(media_id)
+        try:
+            storage.delete_file(media_id)
+        except:
+            return "Deletion failed"
+    else:
+        return "Image not found"
+
+# takes media_id and deletes requested image
+# returns None if successful and a str with details if not
+def update_image(media_id: str, new_image: ImageFile) -> str | None:
+    if image_exists(media_id):
+        db.delete_entry(media_id)
+        try:
+            storage.delete_file(media_id)
+        except:
+            return "No file to update"
+        storage.store_image(new_image, media_id)
+        db.index_image(new_image, media_id)
+    else:
+        return "Image not found"
 
 # queries the filetype of an image
 def get_filetype(media_id: str) -> str:
@@ -68,10 +107,3 @@ def get_mimetype(filetype: str) -> str:
         return DEFAULT_TYPE
 
 
-## Checks if image exists and returns a boolean
-#def image_exists(media_id: str) -> bool:
-#    exists = db.query(queries.id(media_id))
-#    if exists:
-#        return True
-#    else:
-#        return False

@@ -13,5 +13,6 @@ def filetype(id: str) -> Select:
     return stmt
 
 def metadata(id: str) -> Select:
-    stmt = select(model.ImageEntry.metadata).where(model.ImageEntry.id == id)
+    stmt = select(model.ImageEntry.image_metadata).where(model.ImageEntry.id == id)
     return stmt
+

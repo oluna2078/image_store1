@@ -42,3 +42,9 @@ def query(stmt) -> str | None:
         if result:
             return result
 
+def delete_entry(prim_key) -> None:
+    with Session(engine) as session:
+        entry = session.get(model.ImageEntry, prim_key)
+        session.delete(entry)
+        session.commit()
+
