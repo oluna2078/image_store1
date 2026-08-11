@@ -23,8 +23,6 @@ goals:
 - [ ] autoconversion to a standard filetype for all images (e.g. all to JPEG)
 - [ ] compression before storing images (maybe using ffmpeg)
 - [ ] removal of EXIF data (maybe using exiftool)
-- [ ] image processing like cropping/resizing etc.
-- [ ] remove duplicates\*
 
 
 ### Database
@@ -35,7 +33,6 @@ goals:
 - [x] function: `image.filetype, (metadata)` -> `media_id` (index)
 - [ ] add metadata processing
 - [ ] save upload date
-- [ ] \*duplicates are marked with a reference to the original
 
 
 ### API
