@@ -1,6 +1,7 @@
 from io import BytesIO
 from PIL import Image
 from PIL.ImageFile import ImageFile
+from sqlalchemy import except_
 from sqlalchemy.exc import NoResultFound
 
 from src import storage as storage
@@ -44,12 +45,32 @@ def save_image(image) -> str:
     db.index_image(image, id)
     return id
 
+## Checks if image exists and returns a boolean
+def image_exists(media_id: str) -> bool:
+    exists = db.query(queries.id(media_id))
+    if exists:
+        return True
+    else:
+        return False
 
 # takes media_id and returns image file
 def get_image(media_id: str) -> ImageFile | None:
-    if db.query(queries.id(media_id)):
+    if image_exists(media_id):
         image: ImageFile = storage.retrieve_image(media_id)
         return image    
+
+# takes media_id and deletes requested image
+# returns None if successful and a str with details if not
+def delete_image(media_id: str) -> str | None:
+    if image_exists(media_id):
+        db.delete_entry(media_id)
+
+        try:
+            storage.delete_file(media_id)
+        except:
+            return "Deletion failed"
+    else:
+        return "Image not found"
 
 # queries the filetype of an image
 def get_filetype(media_id: str) -> str:
@@ -68,10 +89,3 @@ def get_mimetype(filetype: str) -> str:
         return DEFAULT_TYPE
 
 
-## Checks if image exists and returns a boolean
-#def image_exists(media_id: str) -> bool:
-#    exists = db.query(queries.id(media_id))
-#    if exists:
-#        return True
-#    else:
-#        return False

@@ -33,3 +33,8 @@ def retrieve_image(media_id):
     image = Image.open(f"{STORAGE_PATH}/{media_id}")
     return image
 
+# takes media_id and deletes file with given name
+# returns None if successful
+def delete_file(media_id: str):
+    os.remove(f"{STORAGE_PATH}/{media_id}")
+

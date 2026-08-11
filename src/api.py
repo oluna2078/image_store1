@@ -12,16 +12,16 @@ app = FastAPI()
 
 
 # uploads
-@app.post("/media/upload/")
+@app.post("/media/upload/", status_code=201)
 def add_image(image_stream: Annotated[bytes, File()]):
     image = img_handler.stream2image(image_stream)
     if image:
         media_id: str = img_handler.save_image(image)
         return {"media_id": media_id}
     else:
-        raise HTTPException(status_code=422, detail="Cannot process image")
+        raise HTTPException(status_code=415, detail="Cannot process image")
 
-@app.post("/media/multi-upload/")
+@app.post("/media/multi-upload/", status_code=201)
 def add_multiple_images(image_list: Annotated[list[bytes], File()]
 )-> list[dict[str, str]]:
     media_ids: list[dict[str, str]] = []
@@ -32,7 +32,7 @@ def add_multiple_images(image_list: Annotated[list[bytes], File()]
             media_id: str = img_handler.save_image(image)
             media_ids.append({"media_id": media_id})
         else:
-            raise HTTPException(status_code=422, detail="Cannot process image")
+            raise HTTPException(status_code=415, detail="Cannot process images")
 
     return media_ids
 
@@ -67,6 +67,18 @@ def view_image(
         return Response(content=image_bytes, media_type=mediatype)    
     else:
         raise HTTPException(status_code=404, detail="File not found")
+
+
+# delete
+@app.delete("/media/{id}")
+def delete_image(
+        id: Annotated[UUID, Path()]
+):
+    details = img_handler.delete_image(str(id))
+    if not details:
+        return {"media_id": id}
+    else:
+        raise HTTPException(status_code=500, detail=f"Deletion failed: {details}")
 
 
 # tab icon
