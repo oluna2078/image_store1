@@ -2,7 +2,6 @@ import uuid
 from io import BytesIO
 from PIL import Image
 from PIL.ImageFile import ImageFile
-from sqlalchemy import except_
 from sqlalchemy.exc import NoResultFound
 
 from src import storage as storage
@@ -10,7 +9,10 @@ from src import database as db
 from src import db_queries as queries
 
 
-PREFFERED_FORMAT: str = ''
+# All *newly* uploaded images will be converted to this type
+# before saving it to disk
+# Currently supported (tested): PNG, JPEG, WEBP
+STORE_AS: str = 'JPEG'
 
 MIME_TYPES: dict[str, str] = {
     'PNG': 'image/png',
@@ -21,6 +23,7 @@ MIME_TYPES: dict[str, str] = {
 }
 
 DEFAULT_TYPE: str = 'image/png'
+
 
 # generates media_id and returns it as str
 def generate_id() -> str:
