@@ -24,6 +24,7 @@
 	    sqlalchemy
 	    pillow
 	    python-multipart
+	    imagehash
 	]);
 
 	# Install all dependencies of a package

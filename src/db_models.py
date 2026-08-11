@@ -9,5 +9,7 @@ class ImageEntry(Base):
     __tablename__ = "images"
     id: Mapped[str] = mapped_column(primary_key=True)
     filetype: Mapped[str]
+    hash: Mapped[str]
+    duplicate_of: Mapped[Optional[str]]
     image_metadata: Mapped[Optional[list[str]]] = mapped_column(JSON)
 

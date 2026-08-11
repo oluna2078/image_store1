@@ -1,8 +1,7 @@
-import uuid
+import uuid, hashlib
 from io import BytesIO
 from PIL import Image
 from PIL.ImageFile import ImageFile
-from sqlalchemy import except_
 from sqlalchemy.exc import NoResultFound
 
 from src import storage as storage
@@ -22,9 +21,17 @@ MIME_TYPES: dict[str, str] = {
 
 DEFAULT_TYPE: str = 'image/png'
 
+
 # generates media_id and returns it as str
 def generate_id() -> str:
     return str(uuid.uuid4())
+
+# takes image and returns its hash as str
+def hash_image(image: ImageFile) -> str:
+    bytes = image.tobytes()
+    hash = hashlib.sha1(bytes) # SHA-1 shpuld be easier to compute
+    return hash.hexdigest()
+
 
 # converts bytestream into image
 def stream2image(stream: bytes) -> ImageFile | None:
@@ -46,8 +53,9 @@ def image2stream(image: ImageFile, filetype: str) -> bytes:
 # gives back its media_id
 def save_image(image) -> str:
     media_id = generate_id()
+    hash = hash_image(image)
     storage.store_image(image, media_id)
-    db.index_image(image, media_id)
+    db.index_image(image, media_id, hash)
     return media_id
 
 ## Checks if image exists and returns a boolean
@@ -85,10 +93,12 @@ def update_image(media_id: str, new_image: ImageFile) -> str | None:
             storage.delete_file(media_id)
         except:
             return "No file to update"
+        hash = hash_image(new_image)
         storage.store_image(new_image, media_id)
-        db.index_image(new_image, media_id)
+        db.index_image(new_image, media_id, hash=hash)
     else:
         return "Image not found"
+
 
 # queries the filetype of an image
 def get_filetype(media_id: str) -> str:

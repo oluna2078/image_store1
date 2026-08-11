@@ -25,10 +25,10 @@ model.Base.metadata.create_all(engine)
 
 # takes PIL image obj, str with UUID
 # returns store_id (in UUID) as str
-def index_image(image, id) -> str:
+def index_image(image, id, hash) -> str:
     with Session(engine) as session:
         image_format = image.format
-        entry = model.ImageEntry(id=id, filetype=image_format)
+        entry = model.ImageEntry(id=id, filetype=image_format, hash=hash)
 
         session.add(entry)
         session.commit()
