@@ -1,5 +1,4 @@
-from sqlalchemy import engine, create_engine, select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy import engine, create_engine
 from sqlalchemy.orm import Session
 import os
 
@@ -25,7 +24,7 @@ model.Base.metadata.create_all(engine)
 
 # takes PIL image obj, str with UUID
 # returns store_id (in UUID) as str
-def index_image(image, id, hash) -> str:
+def index_new_image(image, id, hash) -> str:
     with Session(engine) as session:
         image_format = image.format
         entry = model.ImageEntry(id=id, filetype=image_format, hash=hash)
@@ -35,10 +34,27 @@ def index_image(image, id, hash) -> str:
 
         return id
 
+def index_duplicate_image(image, id, hash, original) -> str:
+    with Session(engine) as session:
+        image_format = image.format
+        entry = model.ImageEntry(id=id, filetype=image_format, hash=hash, duplicate_of=original)
+
+        session.add(entry)
+        session.commit()
+
+        return id
+
+
 # takes media_id and queries for file format
 def query(stmt) -> str | None:
     with Session(engine) as session:
         result = session.scalars(stmt).first()
+        if result:
+            return result
+        
+def get_entry(id) -> model.ImageEntry | None:
+    with Session(engine) as session:
+        result = session.get(model.ImageEntry, id)
         if result:
             return result
 

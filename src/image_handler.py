@@ -29,7 +29,7 @@ def generate_id() -> str:
 # takes image and returns its hash as str
 def hash_image(image: ImageFile) -> str:
     bytes = image.tobytes()
-    hash = hashlib.sha1(bytes) # SHA-1 shpuld be easier to compute
+    hash = hashlib.sha1(bytes) # SHA-1 should be easier to compute
     return hash.hexdigest()
 
 
@@ -54,11 +54,16 @@ def image2stream(image: ImageFile, filetype: str) -> bytes:
 def save_image(image) -> str:
     media_id = generate_id()
     hash = hash_image(image)
-    storage.store_image(image, media_id)
-    db.index_image(image, media_id, hash)
+    original = db.query(queries.hash_not_duplicate(hash))
+
+    if original:
+        db.index_duplicate_image(image, media_id, hash, original)
+    else:
+        storage.store_image(image, media_id)
+        db.index_new_image(image, media_id, hash)
     return media_id
 
-## Checks if image exists and returns a boolean
+# checks if image exists and returns a boolean
 def image_exists(media_id: str) -> bool:
     exists = db.query(queries.id(media_id))
     if exists:
@@ -68,9 +73,14 @@ def image_exists(media_id: str) -> bool:
 
 # takes media_id and returns image file
 def get_image(media_id: str) -> ImageFile | None:
-    if image_exists(media_id):
-        image: ImageFile = storage.retrieve_image(media_id)
-        return image    
+    entry = db.get_entry(media_id)
+    if entry:
+        if entry.duplicate_of:
+            image: ImageFile = storage.retrieve_image(entry.duplicate_of)
+            return image    
+        else:
+            image: ImageFile = storage.retrieve_image(media_id)
+            return image    
 
 # takes media_id and deletes requested image
 # returns None if successful and a str with details if not
@@ -93,9 +103,10 @@ def update_image(media_id: str, new_image: ImageFile) -> str | None:
             storage.delete_file(media_id)
         except:
             return "No file to update"
+
         hash = hash_image(new_image)
         storage.store_image(new_image, media_id)
-        db.index_image(new_image, media_id, hash=hash)
+        db.index_new_image(new_image, media_id, hash)
     else:
         return "Image not found"
 
