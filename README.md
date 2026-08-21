@@ -38,9 +38,11 @@ goals:
 ### API
 Endpoints:
 ```
-POST /media/upload/
-POST /media/multi-upload/
-GET  /media/{media_id}
+POST   /media/upload/
+POST   /media/multi-upload/
+GET    /media/{media_id}
+DELETE /media/{media_id}
+PUT    /media/{media_id}
 ```
 
 goals:
