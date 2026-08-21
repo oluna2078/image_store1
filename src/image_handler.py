@@ -48,24 +48,27 @@ def image2stream(image: ImageFile, filetype: str) -> bytes:
     stream = buffer.getvalue()
     return stream
 
-
-# takes an image, indexes and stores it
-# gives back its media_id
-def save_image(image) -> str:
-    media_id = generate_id()
+# takes an image with its media_id, indexes and stores it
+def save_image(media_id: str, image: ImageFile) -> None:
     hash = hash_image(image)
-    original = db.query(queries.hash_not_duplicate(hash))
+    original = db.query_first(queries.hash_not_duplicate(hash))
 
     if original:
         db.index_duplicate_image(image, media_id, hash, original)
     else:
         storage.store_image(image, media_id)
         db.index_new_image(image, media_id, hash)
+
+# takes an image, indexes and stores it
+# gives back its media_id
+def save_new_image(image) -> str:
+    media_id = generate_id()
+    save_image(media_id, image)
     return media_id
 
 # checks if image exists and returns a boolean
 def image_exists(media_id: str) -> bool:
-    exists = db.query(queries.id(media_id))
+    exists = db.query_first(queries.id(media_id))
     if exists:
         return True
     else:
@@ -98,22 +101,36 @@ def delete_image(media_id: str) -> str | None:
 # returns None if successful and a str with details if not
 def update_image(media_id: str, new_image: ImageFile) -> str | None:
     if image_exists(media_id):
-        db.delete_entry(media_id)
-        try:
-            storage.delete_file(media_id)
-        except:
-            return "No file to update"
+        duplicates = db.query_all(queries.duplicate_of(media_id))
+        
+        if duplicates:
+            duplicates_list: list = list(duplicates)
+            print(type(duplicates))
+            print(duplicates_list)
 
-        hash = hash_image(new_image)
-        storage.store_image(new_image, media_id)
-        db.index_new_image(new_image, media_id, hash)
+            new_origin = duplicates_list.pop(0)
+            db.update_duplicate(id=new_origin, duplicate_of=None)
+
+            for i in duplicates_list:
+                db.update_duplicate(id=i, duplicate_of=new_origin)
+            try:
+                storage.rename_file(media_id, new_origin)
+            except:
+                return "No file to update"
+        else:
+            try:
+                storage.delete_file(media_id)
+            except:
+                return "No file to update"
+        db.delete_entry(media_id)
+        save_image(media_id, new_image)
     else:
         return "Image not found"
 
 
 # queries the filetype of an image
 def get_filetype(media_id: str) -> str:
-    filetype = db.query(queries.filetype(media_id))
+    filetype = db.query_first(queries.filetype(media_id))
     if filetype:
         return filetype
     else:

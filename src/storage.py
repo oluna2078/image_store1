@@ -36,3 +36,5 @@ def retrieve_image(media_id):
 def delete_file(media_id: str):
     os.remove(f"{STORAGE_PATH}/{media_id}")
 
+def rename_file(old_media_id: str, new_media_id: str):
+    os.rename(f"{STORAGE_PATH}/{old_media_id}", f"{STORAGE_PATH}/{new_media_id}")

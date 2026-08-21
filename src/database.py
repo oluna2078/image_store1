@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from sqlalchemy import engine, create_engine
 from sqlalchemy.orm import Session
 import os
@@ -45,10 +47,23 @@ def index_duplicate_image(image, id, hash, original) -> str:
         return id
 
 
+def update_duplicate(id, duplicate_of: str | None) -> None:
+    with Session(engine) as session:
+        entry = session.get(model.ImageEntry, id)
+        entry.duplicate_of = duplicate_of
+        session.commit()
+
+
 # takes media_id and queries for file format
-def query(stmt) -> str | None:
+def query_first(stmt) -> str | None:
     with Session(engine) as session:
         result = session.scalars(stmt).first()
+        if result:
+            return result
+
+def query_all(stmt) -> Sequence | None:
+    with Session(engine) as session:
+        result = session.scalars(stmt).all()
         if result:
             return result
         

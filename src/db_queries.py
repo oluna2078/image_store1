@@ -45,3 +45,9 @@ def hash_not_duplicate(hash: str) -> Select:
     )
     return stmt
 
+def duplicate_of(id: str) -> Select:
+    stmt = (
+        select(model.ImageEntry.id)
+        .where(model.ImageEntry.duplicate_of == id)
+    )
+    return stmt

@@ -16,7 +16,7 @@ app = FastAPI()
 def add_image(image_stream: Annotated[bytes, File()]):
     image = img_handler.stream2image(image_stream)
     if image:
-        media_id: str = img_handler.save_image(image)
+        media_id: str = img_handler.save_new_image(image)
         return {"media_id": media_id}
     else:
         raise HTTPException(status_code=415, detail="Cannot process image")
@@ -29,7 +29,7 @@ def add_multiple_images(image_list: Annotated[list[bytes], File()]
     for image_stream in image_list:
         image = img_handler.stream2image(image_stream)
         if image:
-            media_id: str = img_handler.save_image(image)
+            media_id: str = img_handler.save_new_image(image)
             media_ids.append({"media_id": media_id})
         else:
             raise HTTPException(status_code=415, detail="Cannot process images")
