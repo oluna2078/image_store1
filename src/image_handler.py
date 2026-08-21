@@ -89,11 +89,24 @@ def get_image(media_id: str) -> ImageFile | None:
 # returns None if successful and a str with details if not
 def delete_image(media_id: str) -> str | None:
     if image_exists(media_id):
+        duplicates = db.query_all(queries.duplicate_of(media_id))
+        if duplicates:
+            duplicates_list: list = list(duplicates)
+            new_origin = duplicates_list.pop(0)
+
+            db.update_duplicate(id=new_origin, duplicate_of=None)
+            for i in duplicates_list:
+                db.update_duplicate(id=i, duplicate_of=new_origin)
+            try:
+                storage.rename_file(media_id, new_origin)
+            except:
+                return "Deletion failed"
+        else:
+            try:
+                storage.delete_file(media_id)
+            except:
+                return "Deletion failed"
         db.delete_entry(media_id)
-        try:
-            storage.delete_file(media_id)
-        except:
-            return "Deletion failed"
     else:
         return "Image not found"
 
@@ -101,28 +114,8 @@ def delete_image(media_id: str) -> str | None:
 # returns None if successful and a str with details if not
 def update_image(media_id: str, new_image: ImageFile) -> str | None:
     if image_exists(media_id):
-        duplicates = db.query_all(queries.duplicate_of(media_id))
-        
-        if duplicates:
-            duplicates_list: list = list(duplicates)
-            print(type(duplicates))
-            print(duplicates_list)
-
-            new_origin = duplicates_list.pop(0)
-            db.update_duplicate(id=new_origin, duplicate_of=None)
-
-            for i in duplicates_list:
-                db.update_duplicate(id=i, duplicate_of=new_origin)
-            try:
-                storage.rename_file(media_id, new_origin)
-            except:
-                return "No file to update"
-        else:
-            try:
-                storage.delete_file(media_id)
-            except:
-                return "No file to update"
-        db.delete_entry(media_id)
+        if delete_image(media_id):
+            return "Image not found"
         save_image(media_id, new_image)
     else:
         return "Image not found"
