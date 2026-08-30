@@ -64,18 +64,18 @@ def add_multiple_images(image_list: Annotated[list[bytes], File()]
 # downloads
 @app.get(
     "/media/{id}",
-    #responses = {
-    #    200: {
-    #        "content": {
-    #            "image/png": {},
-    #            "image/jpeg": {},
-    #            "image/webp": {},
-    #            "image/gif": {},
-    #            "image/x-icon": {}
-    #        }
-    #    }
-    #},
-    #response_class=Response
+    responses = {
+        200: {
+            "content": {
+                "image/png": {},
+                "image/jpeg": {},
+                "image/webp": {},
+                "image/gif": {},
+                "image/x-icon": {}
+            }
+        }
+    },
+    response_class=Response
 )
 def view_image(
         id: Annotated[UUID, Path()],                    # media id
