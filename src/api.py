@@ -1,7 +1,8 @@
 from typing import Annotated
 from uuid import UUID
-from fastapi import FastAPI, File, HTTPException, Path, Response
+from fastapi import FastAPI, File, HTTPException, Path, Query, Response
 from fastapi.responses import FileResponse, HTMLResponse
+from pydantic import BaseModel, Field
 
 from src import storage as storage
 from src import image_handler as img_handler
@@ -9,6 +10,35 @@ from src import image_handler as img_handler
 FAVICON_PATH: str = "res/favicon.ico"
 
 app = FastAPI()
+
+
+class ManipParams(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    w: int | None = Field(None, gt=0)           # relative width
+    h: int | None = Field(None, gt=0)           # relative height
+                                                # > example: 3:2 => ?w=3&h=2
+    s: float | None = Field(None, gt=0, le=1.0) # scale (1.0=100%)
+    aw: int | None = Field(None, gt=0)          # absolute width (in px)
+    ah: int | None = Field(None, gt=0)          # absolute height (in px)
+
+
+def check_manip_q(manip_q_dict: dict) -> str|None:
+    relative_sizing: bool = False
+    absolute_sizing: bool = False
+    if (manip_q_dict["w"]
+        or manip_q_dict["h"]
+        or manip_q_dict["s"]
+    )!= None:
+        relative_sizing = True
+
+    if (manip_q_dict["aw"]
+        or manip_q_dict["ah"]
+    ) != None:
+        absolute_sizing = True
+
+    if (relative_sizing and absolute_sizing) == True:
+        return "Cannot use relative and absolute sizing"
 
 
 # uploads (single & multi)
@@ -40,24 +70,30 @@ def add_multiple_images(image_list: Annotated[list[bytes], File()]
 # downloads
 @app.get(
     "/media/{id}",
-    responses = {
-        200: {
-            "content": {
-                "image/png": {},
-                "image/jpeg": {},
-                "image/webp": {},
-                "image/gif": {},
-                "image/x-icon": {}
-            }
-        }
-    },
-    response_class=Response
+    #responses = {
+    #    200: {
+    #        "content": {
+    #            "image/png": {},
+    #            "image/jpeg": {},
+    #            "image/webp": {},
+    #            "image/gif": {},
+    #            "image/x-icon": {}
+    #        }
+    #    }
+    #},
+    #response_class=Response
 )
 def view_image(
-        id: Annotated[UUID, Path()]
+        id: Annotated[UUID, Path()],                    # media id
+        manip_query: Annotated[ManipParams, Query()]    # manipulation parameters
 ):
     media_id: str = str(id)
     image = img_handler.get_image(media_id)
+    manip_q_dict: dict = dict(manip_query)
+    manip_check = check_manip_q(manip_q_dict)
+
+    if manip_check != None:
+        raise HTTPException(status_code=400, detail=manip_check)
 
     if image:
         filetype: str = img_handler.get_filetype(media_id)
