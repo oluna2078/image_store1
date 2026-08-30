@@ -15,15 +15,15 @@ app = FastAPI()
 class ManipParams(BaseModel):
     model_config = {"extra": "forbid"}
 
-    # sizing
-    wr: int | None = Field(None, gt=0)           # relative width ratio
-    hr: int | None = Field(None, gt=0)           # relative height ratio
-                                                # > example: 3:2 => ?wr=3&hr=2
-    w: int | None = Field(None, gt=0)          # absolute width (in px)
-    h: int | None = Field(None, gt=0)          # absolute height (in px)
+    # cropping
+    w: int | None = Field(None, gt=0)           # absolute width (in px)
+    h: int | None = Field(None, gt=0)           # absolute height (in px)
+    wr: int | None = Field(None, gt=0)          # relative width ratio
+    hr: int | None = Field(None, gt=0)          # relative height ratio
+                                                    # example: 3:2 => ?wr=3&hr=2
 
     # scaling
-    s: float | None = Field(None, gt=0, le=1.0) # scale (1.0=100%)
+    s: float | None = Field(None, gt=0, le=1.0) # scale (1.0 = 100%)
     mw: int | None = Field(None, gt=0)          # max width (in px)
     mh: int | None = Field(None, gt=0)          # max height (in px)
 
@@ -31,7 +31,7 @@ class ManipParams(BaseModel):
 def check_manip_q(manip_q_dict: dict) -> dict|None:
     if ((manip_q_dict["wr"] or manip_q_dict["hr"])
         and (manip_q_dict["w"] or manip_q_dict["h"])) != None:
-        return {"error": "Cannot use relative and absolute sizing",
+        return {"error": "Cannot use relative and absolute cropping",
                 "note": "Scaling is excempt from this rule"}
 
 
@@ -91,14 +91,13 @@ def view_image(
 
     if image:
         if (manip_q_dict["w"] or manip_q_dict ["h"]) != None:
-            pass
+            image = img_handler.crop_image(image, manip_q_dict["w"], manip_q_dict ["h"])
         elif (manip_q_dict["wr"] and manip_q_dict ["hr"]) != None:
             image = img_handler.adjust_img_ratio(image,
                                                  manip_q_dict["wr"], manip_q_dict ["hr"])
         elif (manip_q_dict["wr"] or manip_q_dict ["hr"]) != None:
             raise HTTPException(status_code=400,
-                                detail="Relative sizing requires both width and height")
-
+                                detail="Relative cropping requires both width and height")
 
         if manip_q_dict["s"] != None:
             image = img_handler.scale_image(image, manip_q_dict["s"])

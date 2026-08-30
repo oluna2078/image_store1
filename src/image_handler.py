@@ -138,6 +138,23 @@ def get_mimetype(filetype: str) -> str:
 
 
 # adjust image ratio to wr:hr with minimal resolution loss
+def crop_image(image: Image.Image, new_width: int, new_height: int) -> Image.Image:
+    width = image.size[0]
+    height = image.size[1]
+
+    # check if new boundaries aren't bigger than the old ones
+    if new_width > width:
+        new_width = width
+    if new_height > height:
+        new_height = height
+    
+    # margins are used to crop around the center and not from a corner
+    margin_h = (height - new_height) / 2
+    margin_w = (width - new_width) / 2
+    return image.crop((margin_w, margin_h, new_width + margin_w, new_height + margin_h))
+
+
+# adjust image ratio to wr:hr with minimal resolution loss
 def adjust_img_ratio(image: Image.Image, wr: int, hr: int) -> Image.Image:
     width = image.size[0]
     height = image.size[1]
