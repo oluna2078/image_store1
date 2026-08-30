@@ -1,7 +1,6 @@
 import uuid, hashlib
 from io import BytesIO
 from PIL import Image
-from PIL.ImageFile import ImageFile
 from sqlalchemy.exc import NoResultFound
 
 from src import storage as storage
@@ -27,29 +26,29 @@ def generate_id() -> str:
     return str(uuid.uuid4())
 
 # takes image and returns its hash as str
-def hash_image(image: ImageFile) -> str:
+def hash_image(image: Image.Image) -> str:
     bytes = image.tobytes()
     hash = hashlib.sha1(bytes) # SHA-1 should be easier to compute
     return hash.hexdigest()
 
 
 # converts bytestream into image
-def stream2image(stream: bytes) -> ImageFile | None:
+def stream2image(stream: bytes) -> Image.Image | None:
     try:
-        image: ImageFile = Image.open(BytesIO(stream))
+        image: Image.Image = Image.open(BytesIO(stream))
         return image
     except:
         return None
 
 # converts image into bytestream with format:filetype
-def image2stream(image: ImageFile, filetype: str) -> bytes:
+def image2stream(image: Image.Image, filetype: str) -> bytes:
     buffer = BytesIO()
     image.save(buffer, format=filetype)
     stream = buffer.getvalue()
     return stream
 
 # takes an image with its media_id, indexes and stores it
-def save_image(media_id: str, image: ImageFile) -> None:
+def save_image(media_id: str, image: Image.Image) -> None:
     hash = hash_image(image)
     original = db.query_first(queries.hash_not_duplicate(hash))
 
@@ -75,14 +74,14 @@ def image_exists(media_id: str) -> bool:
         return False
 
 # takes media_id and returns image file
-def get_image(media_id: str) -> ImageFile | None:
+def get_image(media_id: str) -> Image.Image | None:
     entry = db.get_entry(media_id)
     if entry:
         if entry.duplicate_of:
-            image: ImageFile = storage.retrieve_image(entry.duplicate_of)
+            image: Image.Image = storage.retrieve_image(entry.duplicate_of)
             return image    
         else:
-            image: ImageFile = storage.retrieve_image(media_id)
+            image: Image.Image = storage.retrieve_image(media_id)
             return image    
 
 # takes media_id and deletes requested image
@@ -112,7 +111,7 @@ def delete_image(media_id: str) -> str | None:
 
 # takes media_id and deletes requested image
 # returns None if successful and a str with details if not
-def update_image(media_id: str, new_image: ImageFile) -> str | None:
+def update_image(media_id: str, new_image: Image.Image) -> str | None:
     if image_exists(media_id):
         if delete_image(media_id):
             return "Image not found"
@@ -138,3 +137,27 @@ def get_mimetype(filetype: str) -> str:
         return DEFAULT_TYPE
 
 
+# adjust image ratio to wr:hr with minimal resolution loss
+def adjust_img_ratio(image: Image.Image, wr: int, hr: int) -> Image.Image:
+    width = image.size[0]
+    height = image.size[1]
+    
+    # try horizontal base
+    new_height = width * (hr / wr)
+    if new_height <= height:
+        margin = (height - new_height) / 2
+        return image.crop((0, margin, width, new_height + margin))
+    # use vertical base
+    else:
+        new_width = height * (wr / hr)
+        margin = (width - new_width) / 2
+        return image.crop((margin, 0, new_width + margin, height))
+    # margin is used to crop around the center and not from a corner
+
+
+# resize image to either 1.0=100% (original) or less
+def scale_image(image: Image.Image, scale: float) -> Image.Image:
+    # I could scale both w and h but it would be wasted computation
+    new_width = scale * image.size[0]
+    image.thumbnail((new_width, image.size[1]))
+    return image

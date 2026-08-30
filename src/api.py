@@ -15,30 +15,24 @@ app = FastAPI()
 class ManipParams(BaseModel):
     model_config = {"extra": "forbid"}
 
-    w: int | None = Field(None, gt=0)           # relative width
-    h: int | None = Field(None, gt=0)           # relative height
-                                                # > example: 3:2 => ?w=3&h=2
+    # sizing
+    wr: int | None = Field(None, gt=0)           # relative width ratio
+    hr: int | None = Field(None, gt=0)           # relative height ratio
+                                                # > example: 3:2 => ?wr=3&hr=2
+    w: int | None = Field(None, gt=0)          # absolute width (in px)
+    h: int | None = Field(None, gt=0)          # absolute height (in px)
+
+    # scaling
     s: float | None = Field(None, gt=0, le=1.0) # scale (1.0=100%)
-    aw: int | None = Field(None, gt=0)          # absolute width (in px)
-    ah: int | None = Field(None, gt=0)          # absolute height (in px)
+    mw: int | None = Field(None, gt=0)          # max width (in px)
+    mh: int | None = Field(None, gt=0)          # max height (in px)
 
 
-def check_manip_q(manip_q_dict: dict) -> str|None:
-    relative_sizing: bool = False
-    absolute_sizing: bool = False
-    if (manip_q_dict["w"]
-        or manip_q_dict["h"]
-        or manip_q_dict["s"]
-    )!= None:
-        relative_sizing = True
-
-    if (manip_q_dict["aw"]
-        or manip_q_dict["ah"]
-    ) != None:
-        absolute_sizing = True
-
-    if (relative_sizing and absolute_sizing) == True:
-        return "Cannot use relative and absolute sizing"
+def check_manip_q(manip_q_dict: dict) -> dict|None:
+    if ((manip_q_dict["wr"] or manip_q_dict["hr"])
+        and (manip_q_dict["w"] or manip_q_dict["h"])) != None:
+        return {"error": "Cannot use relative and absolute sizing",
+                "note": "Scaling is excempt from this rule"}
 
 
 # uploads (single & multi)
@@ -92,10 +86,23 @@ def view_image(
     manip_q_dict: dict = dict(manip_query)
     manip_check = check_manip_q(manip_q_dict)
 
-    if manip_check != None:
+    if manip_check:
         raise HTTPException(status_code=400, detail=manip_check)
 
     if image:
+        if (manip_q_dict["w"] or manip_q_dict ["h"]) != None:
+            pass
+        elif (manip_q_dict["wr"] and manip_q_dict ["hr"]) != None:
+            image = img_handler.adjust_img_ratio(image,
+                                                 manip_q_dict["wr"], manip_q_dict ["hr"])
+        elif (manip_q_dict["wr"] or manip_q_dict ["hr"]) != None:
+            raise HTTPException(status_code=400,
+                                detail="Relative sizing requires both width and height")
+
+
+        if manip_q_dict["s"] != None:
+            image = img_handler.scale_image(image, manip_q_dict["s"])
+
         filetype: str = img_handler.get_filetype(media_id)
         mediatype: str = img_handler.get_mimetype(filetype)
         image_bytes = img_handler.image2stream(image, filetype)
