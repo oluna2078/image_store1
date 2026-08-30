@@ -1,6 +1,5 @@
 import os
 from PIL import Image
-from PIL.ImageFile import ImageFile
 
 
 STORAGE_PATH: str = os.getcwd() + "/store"
@@ -17,7 +16,7 @@ init_store()
 
 # takes an image and stores it in ../files/ with the file name: media_id
 # returns filepath of stored image
-def store_image(image: ImageFile, media_id: str) ->  str:
+def store_image(image: Image.Image, media_id: str) ->  str:
     save_path = f"{STORAGE_PATH}/{media_id}"
     image_format = image.format
 
