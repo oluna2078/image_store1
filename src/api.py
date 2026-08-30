@@ -23,9 +23,9 @@ class ManipParams(BaseModel):
                                                     # example: 3:2 => ?wr=3&hr=2
 
     # scaling
-    s: float | None = Field(None, gt=0, le=1.0) # scale (1.0 = 100%)
     mw: int | None = Field(None, gt=0)          # max width (in px)
     mh: int | None = Field(None, gt=0)          # max height (in px)
+    s: float | None = Field(None, gt=0, le=1.0) # scale (1.0 = 100%)
 
 
 def check_manip_q(manip_q_dict: dict) -> dict|None:
@@ -98,6 +98,10 @@ def view_image(
         elif (manip_q_dict["wr"] or manip_q_dict ["hr"]) != None:
             raise HTTPException(status_code=400,
                                 detail="Relative cropping requires both width and height")
+
+        if (manip_q_dict["mw"] or manip_q_dict ["mh"]) != None:
+            image = img_handler.scale_image_limit(image,
+                                                  manip_q_dict["mw"], manip_q_dict ["mh"])
 
         if manip_q_dict["s"] != None:
             image = img_handler.scale_image(image, manip_q_dict["s"])
