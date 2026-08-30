@@ -138,14 +138,23 @@ def get_mimetype(filetype: str) -> str:
 
 
 # adjust image ratio to wr:hr with minimal resolution loss
-def crop_image(image: Image.Image, new_width: int, new_height: int) -> Image.Image:
+def crop_image(image: Image.Image,
+               new_width: int|None = None,
+               new_height: int|None = None
+) -> Image.Image:
     width = image.size[0]
     height = image.size[1]
 
-    # check if new boundaries aren't bigger than the old ones
-    if new_width > width:
+    # check if inputs are empty
+    # after: check if new boundaries aren't bigger than the old ones
+    if new_width == None:
         new_width = width
-    if new_height > height:
+    elif new_width > width:
+        new_width = width
+
+    if new_height == None:
+        new_height = height
+    elif new_height > height:
         new_height = height
     
     # margins are used to crop around the center and not from a corner
@@ -172,9 +181,30 @@ def adjust_img_ratio(image: Image.Image, wr: int, hr: int) -> Image.Image:
     # margin is used to crop around the center and not from a corner
 
 
-# resize image to either 1.0=100% (original) or less
+# scale image to either 1.0=100% (original) or less
 def scale_image(image: Image.Image, scale: float) -> Image.Image:
     # I could scale both w and h but it would be wasted computation
     new_width = scale * image.size[0]
     image.thumbnail((new_width, image.size[1]))
+    return image
+
+
+# limit image w/h to max_w / max_h (in px)
+def scale_image_limit(image: Image.Image,
+               max_w: int|None = None,
+               max_h: int|None = None
+) -> Image.Image:
+    # check if inputs are empty
+    if max_w:
+        new_max_w = max_w
+    else:
+        width = image.size[0]
+        new_max_w = width
+    if max_h:
+        new_max_h = max_h
+    else:
+        height = image.size[1]
+        new_max_h = height
+    
+    image.thumbnail((new_max_w, new_max_h))
     return image
